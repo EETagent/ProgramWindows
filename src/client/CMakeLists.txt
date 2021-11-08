@@ -1,6 +1,11 @@
 # Klient
-add_executable (client main.c http/client.c icmp/client.c)
-
+add_executable (client main.c)
 set_target_properties(client PROPERTIES LINKER_LANGUAGE C) 
 
-target_link_libraries(client wsock32 ws2_32 iphlpapi)\w
+# ICMP modul
+add_library(module_icmp STATIC "modules/icmp/client.c")
+# HTTP modul
+add_library(module_http STATIC "modules/http/client.c")
+
+target_link_libraries(client wsock32 ws2_32 iphlpapi)
+target_link_libraries(client module_icmp module_http)

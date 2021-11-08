@@ -8,8 +8,9 @@ if(WIN32)
 endif()
 
 # HTTP server
-add_library(mongoose STATIC http/mongoose/mongoose.c)
+add_library(mongoose STATIC "http/mongoose/mongoose.c")
 target_include_directories(mongoose PRIVATE http/mongoose)
+
 add_executable(http_server http/main.c)
 target_link_libraries(http_server PRIVATE mongoose)
 target_include_directories(http_server PRIVATE http/mongoose)
