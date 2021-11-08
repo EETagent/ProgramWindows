@@ -78,16 +78,16 @@ void SetIcmpSequence(char* buf)
 
 	sequence = GetTickCount64();
 
-	ICMP_HDR* icmpv4 = NULL;
-	icmpv4 = (ICMP_HDR*)buf;
+	ICMP_HEADER* icmpv4 = NULL;
+	icmpv4 = (ICMP_HEADER*)buf;
 	icmpv4->icmp_sequence = (USHORT)sequence;
 
 }
 
 void ComputeIcmpChecksum(SOCKET s, char* buf, int packetlen, struct addrinfo* dest) {
-	ICMP_HDR* icmpv4 = NULL;
+	ICMP_HEADER* icmpv4 = NULL;
 
-	icmpv4 = (ICMP_HDR*)buf;
+	icmpv4 = (ICMP_HEADER*)buf;
 	icmpv4->icmp_checksum = 0;
 	icmpv4->icmp_checksum = checksum((USHORT*)buf, packetlen);
 }
@@ -129,11 +129,10 @@ int PostRecvfrom(SOCKET s, char* buf, int buflen, SOCKADDR* from, int* fromlen, 
 void PrintPayload(char* buf, int bytes)
 {
 	IPV4_HDR* iphdr = NULL;
-	ICMP_HDR* icmphdr = NULL;
+	ICMP_HEADER* icmphdr = NULL;
 
-	ethhdr = (ETH_HEADER*)buf;
 	iphdr = (IPV4_HDR*)(buf );
-	icmphdr = (ICMP_HEADER*)(buf + sizeof(ETH_HEADER) + sizeof(IPV4_HDR));
+	icmphdr = (ICMP_HEADER*)(buf + sizeof(IPV4_HDR));
 	int hdrlen = (iphdr->ip_verlen & 0x0F) * 4;
 	printf("\nCode %d\n", hdrlen);
 
@@ -261,7 +260,7 @@ int main(int argc, char** argv) {
 		goto CLEANUP;
 	}
 
-	packetlen += sizeof(ICMP_HDR);
+	packetlen += sizeof(ICMP_HEADER);
 
 
 	packetlen += gDataSize;
@@ -275,17 +274,17 @@ int main(int argc, char** argv) {
 	}
 
 
-	ICMP_HDR* icmp_hdr = NULL;
+	ICMP_HEADER* icmp_hdr = NULL;
 	char* datapart = NULL;
 
-	icmp_hdr = (ICMP_HDR*)icmpbuf;
+	icmp_hdr = (ICMP_HEADER*)icmpbuf;
 	icmp_hdr->icmp_type = 8;
 	icmp_hdr->icmp_code = 0;
 	icmp_hdr->icmp_id = (USHORT)GetCurrentProcessId();
 	icmp_hdr->icmp_checksum = 0;
 	icmp_hdr->icmp_sequence = 0;
 
-	datapart = icmpbuf + sizeof(ICMP_HDR);
+	datapart = icmpbuf + sizeof(ICMP_HEADER);
 
 	memset(datapart, 'E', gDataSize);
 
