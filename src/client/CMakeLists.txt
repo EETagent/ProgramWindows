@@ -1,6 +1,5 @@
-
-# Client
-add_executable (client "./client/main.c ./client/modules/http/client.c" ./client/modules/icmp/client.c")
+# Klient
+add_executable (client main.c http/client.c icmp/client.c)
 
 set_target_properties(client PROPERTIES LINKER_LANGUAGE C) 
 
