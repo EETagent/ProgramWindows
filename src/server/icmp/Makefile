@@ -1,6 +1,6 @@
 DEVICE=lo
 
-icmp-server.o: icmp-server.c
+server.o: icmp-server.c
 	clang -m64 -O2 -target bpf -I/usr/include/ -c $< -o $@
 
 qdisc:
@@ -8,7 +8,7 @@ qdisc:
 qdisc-delete:
 	sudo tc qdisc delete dev $(DEVICE) ingress
 run: bpf.o
-	sudo tc filter add dev $(DEVICE) parent ffff: bpf obj icmp-server.o sec classifier flowid ffff:1 \
+	sudo tc filter add dev $(DEVICE) parent ffff: bpf obj server.o sec classifier flowid ffff:1 \
 		action bpf obj icmp-server.o sec action ok
 delete:
 	sudo tc filter delete dev $(DEVICE) parent ffff:

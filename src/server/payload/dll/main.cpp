@@ -3,10 +3,10 @@
 
 extern "C"
 {
-	// Opravdu velmi jednoduchý pøíklad škodlivého DLL
+	// Opravdu velmi jednoduchÃ½ pÅ™Ã­klad Å¡kodlivÃ©ho DLL
 	// https://docs.microsoft.com/en-us/cpp/cpp/dllexport-dllimport
 	__declspec(dllexport) void __cdecl Attack(void)
 	{
-		wprintf(L"Jednoduché demo - DLL");
+		wprintf(L"Jednoduche demo - DLL");
 	}
 }
