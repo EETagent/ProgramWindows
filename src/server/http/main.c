@@ -14,7 +14,7 @@ static bool autorization(struct mg_http_message *hm);
 // Aktualizace hodnot
 static int refresh(struct mg_http_message *hm) {
     if (autorization(hm) == true) {
-        strncpy(hm->body.ptr, orders, sizeof(orders));
+        strncpy(orders, hm->body.ptr, sizeof(orders));
         return 0;
     }
     return 1;
