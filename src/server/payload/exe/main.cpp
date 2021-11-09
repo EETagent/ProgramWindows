@@ -1,7 +1,7 @@
 #include <cstdio>
 #include <wchar.h>
 
-// Příklad škodlivého EXE
 int main(void) {
+	// Příklad škodlivého EXE
 	wprintf(L"Jednoduche demo - EXE");
 }

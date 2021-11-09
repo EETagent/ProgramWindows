@@ -17,5 +17,6 @@ target_include_directories(http_server PRIVATE http/mongoose)
 if(WIN32)
 	target_link_libraries(http_server PRIVATE wsock32 ws2_32)
 endif()
+
 # ICMP server
 # BPF projekt, nutno manuálně přes přidané Makefile
