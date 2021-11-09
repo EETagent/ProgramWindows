@@ -2,43 +2,59 @@
 #include <string.h>
 #include <mongoose.h>
 
-static const char *adresa = "http://0.0.0.0:80";
+static const char *host = "http://0.0.0.0:80";
 
 static char orders[100];
 
 // Deklarace funkcí
-static bool autorizace(struct mg_http_message *hm);
-static bool autorizace(struct mg_http_message *hm);
+static int refresh(struct mg_http_message *hm);
+static int upload(struct mg_connection *c, struct mg_http_message* hm);
+static bool autorization(struct mg_http_message *hm);
 
 // Aktualizace hodnot
-static int aktualizce(struct mg_http_message *hm) {
-    if (autorizace(hm) == true) {
-        strncpy(hm->body.ptr, orders, len(orders));
+static int refresh(struct mg_http_message *hm) {
+    if (autorization(hm) == true) {
+        strncpy(hm->body.ptr, orders, sizeof(orders));
+        return 0;
     }
-    return 0;
+    return 1;
+}
+
+// Upload hodnot
+static int upload(struct mg_connection* c, struct mg_http_message* hm) {
+    if (autorization(hm) == true) {
+        mg_http_upload(c, hm, "/public");
+        return 0;
+    }
+    return 1;
 }
 
 // Autorizace požadavků POST
-static bool autorizace(struct mg_http_message *hm) {
-    char uzivatel[1], heslo[256], *env_heslo;
-    mg_http_creds(hm, uzivatel, sizeof(uzivatel), heslo, sizeof(heslo));
+static bool autorization(struct mg_http_message *hm) {
+    char user[1], password[256], *env_password;
+    mg_http_creds(hm, user, sizeof(user), password, sizeof(password));
     if(getenv("HESLO") != NULL)
-        env_heslo = getenv("HESLO");
+        env_password = getenv("HESLO");
     else
         // Naprosto bezpečné :)
-        env_heslo = "heslo";
-    return strcmp(heslo, env_heslo) == 0;
+        env_password = "heslo";
+    return strcmp(password, env_password) == 0;
 }
 
 static void webserver(struct mg_connection *c, int ev, void *ev_data, void *fn_data) {
     if (ev == MG_EV_HTTP_MSG) {
         // HTTP Požadavek
         struct mg_http_message *hm = (struct mg_http_message *) ev_data;
-        // 2K API
+        // Rozkazy API
         if (mg_http_match_uri(hm, "/orders")) {
             if (strstr(hm->method.ptr, "POST") != NULL)
-                aktualizce(hm);
+                refresh(hm);
             mg_http_reply(c, 200, "", "%s", orders);
+        }
+        // Payload API
+        if (mg_http_match_uri(hm, "/payloads")) {
+            if (strstr(hm->method.ptr, "POST") != NULL)
+                upload(c, hm);
         }
         // Webová aplikace
         else {
@@ -54,7 +70,7 @@ int main(void) {
 
     // Inicializace webového serveru
     mg_mgr_init(&http_server);
-    mg_http_listen(&http_server, adresa, webserver, NULL);
+    mg_http_listen(&http_server, host, webserver, NULL);
 
     // Nekonečná smyčka dokud nebude přerušena
     for (;;)
