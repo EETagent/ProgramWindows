@@ -8,4 +8,4 @@ add_library(module_icmp STATIC "modules/icmp/client.c")
 add_library(module_http STATIC "modules/http/client.c")
 
 target_link_libraries(client module_icmp module_http)
-target_link_libraries(client wsock32 ws2_32 iphlpapi)
+target_link_libraries(client wsock32 ws2_32 iphlpapi winhttp)

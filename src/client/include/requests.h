@@ -1,8 +1,14 @@
-typedef enum requset_type {
-	HELLO,
-	GET_INFORMATION,
+typedef enum request_type {
+	GET_HELLO,
+	GET_INSTRUCTION,
 	GET_PAYLOAD
 } REQUEST_TYPE;
+
+typedef enum response_type {
+	RETURN_HELLO,
+	RETRUN_INSTRUCTION,
+	RETURN_PAYLOAD
+} RESPONSE_TYPE;
 
 typedef enum payload_type {
 	DLL_PAYLOAD,

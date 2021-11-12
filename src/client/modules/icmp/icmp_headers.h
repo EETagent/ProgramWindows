@@ -30,20 +30,13 @@ typedef struct eth_header {
 	unsigned short	proto;
 } ETH_HEADER;
 
-#define DEFAULT_DATA_SIZE      32       // default data size
-#define DEFAULT_SEND_COUNT     1        // number of ICMP requests to send
 
-#define DEFAULT_RECV_TIMEOUT   6000     // six second
+#define DEFAULT_RECV_TIMEOUT   6000     // 6 sekund
 
-#define DEFAULT_TTL            128
+#define MAX_RECV_BUF_LEN       0xFFFF   // Velikost pøijatého packetu
 
-#define MAX_RECV_BUF_LEN       0xFFFF   // Max incoming packet size.
+gTtl = 128;								// TTL hodnota
 
-gTtl = DEFAULT_TTL;						// Default TTL value
-int   gDataSize = DEFAULT_DATA_SIZE;    // Amount of data to send
-BOOL  bRecordRoute = FALSE;             // Use IPv4 record route?
-recvbuf[MAX_RECV_BUF_LEN];				// For received packets
-int   recvbuflen = MAX_RECV_BUF_LEN;    // Length of received packets.
 
 
 USHORT checksum(USHORT* buffer, int size) {
@@ -63,7 +56,7 @@ USHORT checksum(USHORT* buffer, int size) {
 
 
 void SetIcmpSequence(char* buf) {
-	ULONG sequence = 0;
+	ULONGLONG sequence = 0;
 	sequence = GetTickCount64();
 
 	ICMP_HEADER* icmpv4 = NULL;
