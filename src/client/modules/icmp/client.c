@@ -6,7 +6,7 @@
 #include "icmp_headers.h"
 #include "../../include/requests.h"
 
-int PostRecvfrom(SOCKET s, char* buf, int buflen, SOCKADDR* from, int* fromlen, WSAOVERLAPPED* ol) {
+INT PostRecvfrom(SOCKET s, LPSTR buf, INT buflen, SOCKADDR* from, LPINT fromlen, WSAOVERLAPPED* ol) {
 	WSABUF	wbuf;
 	DWORD   flags,bytes;
 	INT	rc;
@@ -16,7 +16,7 @@ int PostRecvfrom(SOCKET s, char* buf, int buflen, SOCKADDR* from, int* fromlen, 
 
 	flags = 0;
 
-	rc = WSARecvFrom(s, &wbuf, 1, &bytes, &flags, from, fromlen, ol,NULL);
+	rc = WSARecvFrom(s, &wbuf, 1, &bytes, &flags, from, fromlen, ol, NULL);
 	if (rc == SOCKET_ERROR) {
 		if (WSAGetLastError() != WSA_IO_PENDING) {
 			fprintf(stderr, "WSARecvFrom failed: %d\n", WSAGetLastError());
@@ -26,7 +26,7 @@ int PostRecvfrom(SOCKET s, char* buf, int buflen, SOCKADDR* from, int* fromlen, 
 	return NO_ERROR;
 }
 
-struct addrinfo* ResolveAddress(char* addr, char* port, int af, int type, int proto) {
+struct addrinfo* ResolveAddress(LPSTR addr, LPSTR port, INT af, INT type, INT proto) {
 	struct addrinfo hints,*res = NULL;
 	INT rc;
 
@@ -45,7 +45,7 @@ struct addrinfo* ResolveAddress(char* addr, char* port, int af, int type, int pr
 	return res;
 }
 
-int SendICMP(LPSTR destination, INT datasize, REQUEST_TYPE request_type, RESPONSE_TYPE *response_type, LPSTR payload) {
+INT SendICMP(LPSTR destination, INT datasize, REQUEST_TYPE request_type, RESPONSE_TYPE *response_type, LPSTR payload) {
 	WSADATA	wsd;
 	SOCKET s = INVALID_SOCKET;
 	LPSTR icmpbuf = NULL;
@@ -96,7 +96,7 @@ int SendICMP(LPSTR destination, INT datasize, REQUEST_TYPE request_type, RESPONS
 	packetlen += sizeof(ICMP_HEADER);
 	packetlen += datasize;
 
-	icmpbuf = (char*)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, packetlen);
+	icmpbuf = (LPSTR)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, packetlen);
 	if (icmpbuf == NULL) {
 		fprintf(stderr, "HeapAlloc failed: %d\n", GetLastError());
 		status = -1;
@@ -105,7 +105,7 @@ int SendICMP(LPSTR destination, INT datasize, REQUEST_TYPE request_type, RESPONS
 
 	// ICMP packet
 	ICMP_HEADER* icmp_hdr = NULL;
-	char* datapart = NULL;
+	LPSTR datapart = NULL;
 
 	icmp_hdr = (ICMP_HEADER*)icmpbuf;
 	// ICMP požadavek typu ECHO
@@ -134,7 +134,7 @@ int SendICMP(LPSTR destination, INT datasize, REQUEST_TYPE request_type, RESPONS
 	memset(datapart, 'E', datasize);
 
 
-	rc = bind(s, local->ai_addr, (int)local->ai_addrlen);
+	rc = bind(s, local->ai_addr, (INT)local->ai_addrlen);
 	if (rc == SOCKET_ERROR) {
 		fprintf(stderr, "bind failed: %d\n", WSAGetLastError());
 		status = -1;
@@ -149,8 +149,8 @@ int SendICMP(LPSTR destination, INT datasize, REQUEST_TYPE request_type, RESPONS
 		goto CLEANUP;
 	}
 
-	char recvbuf[MAX_RECV_BUF_LEN];
-	int recvbuflen = MAX_RECV_BUF_LEN;
+	CHAR recvbuf[MAX_RECV_BUF_LEN];
+	INT recvbuflen = MAX_RECV_BUF_LEN;
 
 	fromlen = sizeof(from);
 	PostRecvfrom(s, recvbuf, recvbuflen, (SOCKADDR*)&from, &fromlen, &recvol);
@@ -160,7 +160,7 @@ int SendICMP(LPSTR destination, INT datasize, REQUEST_TYPE request_type, RESPONS
 	ComputeIcmpChecksum(s, icmpbuf, packetlen, dest);
 
 	time = GetTickCount64();
-	rc = sendto(s, icmpbuf, packetlen,0, dest->ai_addr, (int)dest->ai_addrlen);
+	rc = sendto(s, icmpbuf, packetlen,0, dest->ai_addr, (INT)dest->ai_addrlen);
   
 
 	if (rc == SOCKET_ERROR) {
@@ -207,7 +207,7 @@ int SendICMP(LPSTR destination, INT datasize, REQUEST_TYPE request_type, RESPONS
 		printf(" ");
 	}
 	*/
-	LPSTR payload_temp = (char*)(recvbuf + sizeof(IPV4_HDR) + sizeof(ICMP_HEADER));
+	LPSTR payload_temp = (LPSTR)(recvbuf + sizeof(IPV4_HDR) + sizeof(ICMP_HEADER));
 	
 	strncpy(payload, payload_temp, datasize);
 

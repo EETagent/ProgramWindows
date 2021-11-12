@@ -1,33 +1,31 @@
-#include <stdlib.h>
-
 typedef struct ip_hdr {
-	unsigned char  ip_verlen;
+	UCHAR	ip_verlen;
 
-	unsigned char  ip_tos;
-	unsigned short ip_totallength;
-	unsigned short ip_id;
-	unsigned short ip_offset;
-	unsigned char  ip_ttl;
-	unsigned char  ip_protocol;
-	unsigned short ip_checksum;
-	unsigned int   ip_srcaddr;
-	unsigned int   ip_destaddr;
+	UCHAR	ip_tos;
+	USHORT	ip_totallength;
+	USHORT	ip_id;
+	USHORT	ip_offset;
+	UCHAR	ip_ttl;
+	UCHAR	ip_protocol;
+	USHORT	ip_checksum;
+	UINT	ip_srcaddr;
+	UINT	ip_destaddr;
 } IPV4_HDR, IPV4_HEADER;
 
 typedef struct icmp_header {
-	unsigned char   icmp_type;
-	unsigned char   icmp_code;
-	unsigned short  icmp_checksum;
-	unsigned short  icmp_sequence;
-	unsigned short  icmp_id;
+	UCHAR   icmp_type;
+	UCHAR   icmp_code;
+	USHORT  icmp_checksum;
+	USHORT  icmp_sequence;
+	USHORT  icmp_id;
 } ICMP_HEADER;
 
 
 //https://github.com/torvalds/linux/blob/master/include/uapi/linux/if_ether.h
 typedef struct eth_header {
-	unsigned char	h_dest[6];
-	unsigned char   h_source[6];
-	unsigned short	proto;
+	UCHAR	h_dest[6];
+	UCHAR   h_source[6];
+	USHORT	proto;
 } ETH_HEADER;
 
 
@@ -39,8 +37,8 @@ gTtl = 128;								// TTL hodnota
 
 
 
-USHORT checksum(USHORT* buffer, int size) {
-	unsigned long cksum = 0;
+USHORT checksum(USHORT* buffer, INT size) {
+	ULONG cksum = 0;
 
 	while (size > 1) {
 		cksum += *buffer++;
@@ -55,7 +53,7 @@ USHORT checksum(USHORT* buffer, int size) {
 }
 
 
-void SetIcmpSequence(char* buf) {
+VOID SetIcmpSequence(LPSTR buf) {
 	ULONGLONG sequence = 0;
 	sequence = GetTickCount64();
 
@@ -65,7 +63,7 @@ void SetIcmpSequence(char* buf) {
 
 }
 
-void ComputeIcmpChecksum(SOCKET s, char* buf, int packetlen, struct addrinfo* dest) {
+VOID ComputeIcmpChecksum(SOCKET s, LPSTR buf, INT packetlen, struct addrinfo* dest) {
 	ICMP_HEADER* icmpv4 = NULL;
 
 	icmpv4 = (ICMP_HEADER*)buf;

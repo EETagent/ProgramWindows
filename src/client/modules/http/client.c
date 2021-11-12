@@ -4,7 +4,7 @@
 
 #include "../../include/requests.h"
 
-int SendHTTP(LPSTR destination, REQUEST_TYPE request_type) {
+INT SendHTTP(LPSTR destination, REQUEST_TYPE request_type) {
     switch (request_type) {
         default:    
         case GET_HELLO:
@@ -16,8 +16,8 @@ int SendHTTP(LPSTR destination, REQUEST_TYPE request_type) {
     }
 }
 
-int SendHTTP_Text(LPSTR destination) {
-    int status;
+INT SendHTTP_Text(LPSTR destination) {
+    INT status;
     DWORD dwSize = 0;
     DWORD dwDownloaded = 0;
     LPSTR pszOutBuffer;
